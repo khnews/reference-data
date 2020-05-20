@@ -35,7 +35,7 @@ state_pop_2000 <- getCensus(
 	vars = c("POP", "DATE_DESC", "DATE_"),
 	region = "state:*")
 
-state_pop_2000 <- state_population_2000 %>%
+state_pop_2000 <- state_pop_2000 %>%
 	mutate(population = as.numeric(POP),
 				 DATE_ = as.numeric(DATE_)) %>%
 	# Use July estimates not decennial Census
@@ -93,5 +93,7 @@ state_population <- bind_rows(state_pop_1980, state_pop_1990, state_pop_2000, st
 state_population <- left_join(state_population, fips_states, by = "fips_state")
 state_population <- state_population %>% select(year, fips_state, state_code, state_name, population) %>%
 	arrange(fips_state, year)
+
+table(state_population$year)
 
 write.csv(state_population, "population/state-population.csv", row.names = F, na ="")
