@@ -4,6 +4,7 @@ library(censusapi)
 library(dplyr)
 library(tidyr)
 library(stringr)
+library(vroom)
 
 fips_states <- read.csv("geography-codes/fips-states.csv", 
 												colClasses = "character")
@@ -137,8 +138,51 @@ county_pop_2000 <- county_pop_2000 %>%
 	select(fips_county, year, population) %>%
 	arrange(fips_county, year)
 
-county_population <- bind_rows(county_pop_2000, county_pop)
+###########################################################################
+# County pops pre-2000s from txt files
+# 1990s https://www.census.gov/data/datasets/time-series/demo/popest/intercensal-1990-2000-state-and-county-characteristics.html
+# 1980s https://www.census.gov/data/datasets/time-series/demo/popest/1980s-county.html
+# 1970s https://www.census.gov/data/datasets/time-series/demo/popest/1970s-county.html
+###########################################################################
+
+# Header described in a separate txt file yargh
+pop_cols <- c("year", "fips_county", "group", "age1", "age2", "age3", "age4", "age5",
+															 "age6", "age7", "age8", "age9", "age10", "age11", "age12", "age13", "age14", "age15",
+															 "age16", "age17", "age18")
+
+county_pop_1970 <- read.csv("data-original/population/co-asr-7079.csv", stringsAsFactors = F, header = F)
+colnames(county_pop_1970) <- pop_cols
+county_pop_1970$group <- as.character(county_pop_1970$group)
+
+county_pop_1980 <- read.csv("data-original/population/pe-02.csv", stringsAsFactors = F, header = F, skip = 7)
+colnames(county_pop_1980) <- pop_cols
+
+county_pop_older <- bind_rows(county_pop_1970, county_pop_1980)
+
+county_pop_older  <- county_pop_older %>%
+	mutate(population = select(., starts_with("age")) %>% rowSums(na.rm = TRUE)) %>%
+	group_by(year, fips_county) %>%
+	summarize(population = sum(population)) %>%
+	mutate(fips_county = sprintf("%05s", fips_county))
+
+# 1990 files are longer not the same layout, 1 file per year
+files_1990 <- fs::dir_ls("data-original/population/1990-counties/", glob = "*txt")
+files_1990
+county_pop_1990 <- vroom_fwf(files_1990, trim_ws = T, 
+														 col_positions = fwf_widths(c(2, 7, 3, 2, 2, 7)))
+head(county_pop_1990)
+colnames(county_pop_1990) <- c("year", "fips_county", "group_age", "group_race_sex", "group_ethnicity", "population")
+
+county_pop_1990 <- county_pop_1990 %>%
+	group_by(year, fips_county) %>%
+	summarize(population = sum(population)) %>%
+	ungroup() %>%
+	mutate(year = year + 1900) %>%
+	arrange(year, fips_county)
+
+county_population <- bind_rows(county_pop_older, county_pop_1990, county_pop_2000, county_pop)
 county_population <- left_join(county_population, fips_counties, by = "fips_county")
 county_population <- county_population %>% arrange(fips_county, year)
 
 write.csv(county_population, "population/county-population.csv", row.names = F, na ="")
+
