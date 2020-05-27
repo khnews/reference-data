@@ -13,3 +13,6 @@ Data sources: Census Bureau Population Estimates Program
 
 ## FIPS codes
 Data Source: [Census Bureau Gazetteer files](https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.2019.html)
+
+## Poverty and median household income
+Data source: Census Bureau [Small Area Income and Poverty Estimates](https://www.census.gov/programs-surveys/saipe.html) via API
