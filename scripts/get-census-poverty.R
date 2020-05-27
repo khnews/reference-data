@@ -32,6 +32,10 @@ poverty_state <- poverty_state %>%
 	select(-GEOID) %>%
 	arrange(fips_state, year)
 
+# Make rates proportions
+poverty_state <- poverty_state %>% mutate(poverty_rate = poverty_rate/100,
+																					poverty_rate_moe = poverty_rate_moe/100)
+
 write.csv(poverty_state, "poverty/state-poverty.csv", row.names = F, na ="")
 
 ###########################################################################
@@ -64,6 +68,10 @@ poverty_county <- poverty_county %>% mutate(fips_county = paste0(state, county))
 	select(-GEOID, -state) %>%
 	select(year, fips_county, everything()) %>%
 	arrange(fips_county, year)
+
+# Make rates proportions
+poverty_county <- poverty_county %>% mutate(poverty_rate = poverty_rate/100,
+																					poverty_rate_moe = poverty_rate_moe/100)
 
 # Note: 1996 is missing for all but DC
 write.csv(poverty_county, "poverty/county-poverty.csv", row.names = F, na ="")
