@@ -32,7 +32,7 @@ poverty_state <- poverty_state %>%
 	select(-GEOID) %>%
 	arrange(fips_state, year)
 
-write.csv(poverty_state, "population/state-poverty.csv", row.names = F, na ="")
+write.csv(poverty_state, "poverty/state-poverty.csv", row.names = F, na ="")
 
 ###########################################################################
 # Poverty rates and counts with MOE by county
@@ -66,4 +66,4 @@ poverty_county <- poverty_county %>% mutate(fips_county = paste0(state, county))
 	arrange(fips_county, year)
 
 # Note: 1996 is missing for all but DC
-write.csv(poverty_county, "population/county-poverty.csv", row.names = F, na ="")
+write.csv(poverty_county, "poverty/county-poverty.csv", row.names = F, na ="")
