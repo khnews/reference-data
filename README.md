@@ -16,3 +16,4 @@ Data Source: [Census Bureau Gazetteer files](https://www.census.gov/geographies/
 
 ## Poverty and median household income
 Data source: Census Bureau [Small Area Income and Poverty Estimates](https://www.census.gov/programs-surveys/saipe.html) via API
+* Note: 1996 data for counties is NA
