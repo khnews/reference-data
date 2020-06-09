@@ -71,6 +71,7 @@ state_pop_1990 <- left_join(state_pop_1990, fips_states, by = "state_name") %>%
 # https://www.census.gov/data/tables/time-series/demo/popest/pre-1980-state.html
 ###########################################################################
 
+# 1980s
 state_pop_1980_a <- read.table("data-original/population/st8090ts.txt",
 									 skip = 10, nrows = 52, header = F, stringsAsFactors = F)
 
@@ -90,10 +91,28 @@ state_pop_1980 <- state_pop_1980 %>% gather(year, population, -state_code) %>%
 state_pop_1980 <- left_join(state_pop_1980, fips_states, by = "state_code") %>%
 	select(-state_code, -state_name)
 
+# 1970s
+state_pop_1970_a <- read.table("data-original/population/st7080ts.txt",
+															 skip = 14, nrows = 51, header = F, stringsAsFactors = F)
+
+state_pop_1970_b <- read.table("data-original/population/st7080ts.txt",
+															 skip = 67, nrows = 51, header = F, stringsAsFactors = F)
+colnames(state_pop_1970_a) <- c("fips_state", "state_code", "4/70", "7/71", "7/72", "7/73", "7/74", "7/75")
+colnames(state_pop_1970_b) <- c("fips_state", "state_code", "7/76", "7/77", "7/78", "7/79", "4/80cen")
+
+# Join
+state_pop_1970 <- left_join(state_pop_1970_a, state_pop_1970_b, by = c("state_code", "fips_state"))
+state_pop_1970 <- state_pop_1970 %>% gather(year, population, -state_code, -fips_state) %>%
+	filter(year != "4/80cen") %>%
+	mutate(year = 1900 + as.numeric(str_replace_all(year, "7/|4/|cen", ""))) %>%
+	filter(state_code != "US") %>%
+	select(-state_code) %>%
+	mutate(fips_state = sprintf("%02s", fips_state))
+
 ###########################################################################
 # Join years
 ###########################################################################
-state_population <- bind_rows(state_pop_1980, state_pop_1990, state_pop_2000, state_pop)
+state_population <- bind_rows(state_pop_1970, state_pop_1980, state_pop_1990, state_pop_2000, state_pop)
 state_population <- left_join(state_population, fips_states, by = "fips_state")
 state_population <- state_population %>% select(year, fips_state, state_code, state_name, population) %>%
 	arrange(fips_state, year)
