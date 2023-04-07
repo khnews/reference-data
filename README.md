@@ -1,6 +1,6 @@
 # Reference data
 
-Basic for use across projects, including FIPS codes and state population.
+Basic data for use across projects, including FIPS codes and populations.
 
 ## Population
 Data sources: Census Bureau Population Estimates Program
