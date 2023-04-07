@@ -233,9 +233,3 @@ county_population <- as.data.frame(county_population)
 
 write.csv(county_population, "population/county-population.csv", row.names = F, na ="")
 
-###########################################################################
-# NHGIS from decennial Censuses
-###########################################################################
-nhgis <- read.csv("data-original/population/nhgis0001_csv/nhgis0001_ts_nominal_county.csv", stringsAsFactors = F,
-									colClasses = c("STATEFP" = "character","STATENH" = "character",
-																 "COUNTYFP" = "character","COUNTYNH" = "character"))

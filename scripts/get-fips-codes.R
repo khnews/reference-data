@@ -9,7 +9,19 @@ library(stringr)
 ###########################################################################
 # Read in txt files
 ###########################################################################
-# Current file
+# 2022 file - Connecticut change from counties to planning region
+gaz_2022 <- read.delim("data-original/fips/2022_Gaz_counties_national.txt", 
+											 sep = "\t", stringsAsFactors = F,
+											 colClasses = c("GEOID" = "character"),
+											 encoding = "UTF8")
+
+fips_2022 <- gaz_2022 %>% select(
+	fips_county = GEOID,
+	state_code = USPS,
+	county_name = NAME) %>%
+	mutate(fips_county = str_trim(fips_county))
+
+# 2019 file
 gaz_2019 <- read.delim("data-original/fips/2019_Gaz_counties_national.txt", 
 											 sep = "\t", stringsAsFactors = F,
 											 colClasses = c("GEOID" = "character"),
@@ -53,20 +65,26 @@ fips_1990 <- gaz_1990 %>% select(
 
 ###########################################################################
 # Add in older counties that aren't present anymore
+# Someday add in 1970s additions
 ###########################################################################
-fips_2010_add <- fips_2010 %>% filter(!(fips_county %in% fips_2019$fips_county))
+fips_2019_add <- fips_2019 %>% filter(!(fips_county %in% fips_2022$fips_county))
 
-fips_2000_add <- fips_2000 %>% filter(!(fips_county %in% fips_2019$fips_county) & 
-																				!(fips_county %in% fips_2010$fips_county))
+fips_2010_add <- fips_2010 %>% filter(!(fips_county %in% fips_2022$fips_county) & 
+																				!fips_county %in% fips_2019_add$fips_county)
 
-fips_1990_add <- fips_1990 %>% filter(!(fips_county %in% fips_2019$fips_county) & 
-																				!(fips_county %in% fips_2010$fips_county) & 
-																				!(fips_county %in% fips_2000$fips_county))
+fips_2000_add <- fips_2000 %>% filter(!(fips_county %in% fips_2022$fips_county) & 
+																				!fips_county %in% fips_2019_add$fips_county & 
+																				!fips_county %in% fips_2010_add$fips_county)
 
-fips_add <- bind_rows(fips_1990_add, fips_2000_add, fips_2010_add)
+fips_1990_add <- fips_1990 %>% filter(!(fips_county %in% fips_2022$fips_county) &
+																				!fips_county %in% fips_2019_add$fips_county & 
+																				!fips_county %in% fips_2010_add$fips_county &
+																				!fips_county %in% fips_2000_add$fips_county)
+
+fips_add <- bind_rows(fips_1990_add, fips_2000_add, fips_2010_add, fips_2019_add)
 
 # Full dataset
-fips_counties <- bind_rows(fips_add, fips_2019) %>%
+fips_counties <- bind_rows(fips_add, fips_2022) %>%
 	select(fips_county, state_code, county_name) %>%
 	arrange(fips_county)
 
