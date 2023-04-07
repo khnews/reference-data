@@ -12,18 +12,39 @@ fips_counties <- read.csv("geography-codes/fips-counties.csv",
 												colClasses = "character", encoding = "UTF8")
 
 ###########################################################################
+# Latest estimates not available via API
+###########################################################################
+pop_2020s_full <- read.csv("https://www2.census.gov/programs-surveys/popest/datasets/2020-2022/counties/totals/co-est2022-alldata.csv",
+															 colClasses = c("STATE" = "character", "COUNTY" = "character"))
+
+# Counties
+county_latest <- pop_2020s_full %>% select(STATE, COUNTY, CTYNAME, starts_with("POPESTIMATE")) %>%
+	mutate(fips_county = paste0(STATE, COUNTY)) %>%
+	filter(COUNTY != "000") %>%
+	select(fips_county, starts_with("POPESTIMATE")) %>%
+	pivot_longer(cols = starts_with("POPESTIMATE"), names_to = "year", values_to = "population") %>% 
+	mutate(year = as.numeric(str_replace_all(year, "POPESTIMATE", "")))
+
+# State version
+state_latest <- pop_2020s_full %>% select(STATE, COUNTY, starts_with("POPESTIMATE")) %>%
+	filter(COUNTY == "000") %>%
+	select(fips_state = STATE, starts_with("POPESTIMATE")) %>%
+	pivot_longer(cols = starts_with("POPESTIMATE"), names_to = "year", values_to = "population") %>%
+	mutate(year = as.numeric(str_replace_all(year, "POPESTIMATE", "")))
+
+###########################################################################
 # State population via API
 # Variable and endpoint names aren't totally consistent across vintages
 ###########################################################################
 # Latest years
 population_vars <- listCensusMetadata(name = "pep/population", vintage = 2019)
-state_pop <- getCensus(
+state_pop_2010 <- getCensus(
 	name = "pep/population",
 	vintage = 2019,
 	vars = c("POP", "DATE_CODE", "DATE_DESC"),
 	region = "state:*")
 
-state_pop <- state_pop %>% 
+state_pop_2010 <- state_pop_2010 %>% 
 	mutate(population = as.numeric(POP),
 				 DATE_CODE = as.numeric(DATE_CODE)) %>%
 	# Use July estimates not decennial Census
@@ -112,7 +133,7 @@ state_pop_1970 <- state_pop_1970 %>% gather(year, population, -state_code, -fips
 ###########################################################################
 # Join years
 ###########################################################################
-state_population <- bind_rows(state_pop_1970, state_pop_1980, state_pop_1990, state_pop_2000, state_pop)
+state_population <- bind_rows(state_pop_1970, state_pop_1980, state_pop_1990, state_pop_2000, state_pop_2010, state_latest)
 state_population <- left_join(state_population, fips_states, by = "fips_state")
 state_population <- state_population %>% select(year, fips_state, state_code, state_name, population) %>%
 	arrange(fips_state, year)
@@ -121,16 +142,17 @@ table(state_population$year)
 
 write.csv(state_population, "population/state-population.csv", row.names = F, na ="")
 
+
 ###########################################################################
 # County population via API
 ###########################################################################
-county_pop <- getCensus(
+county_pop_2010 <- getCensus(
 	name = "pep/population",
 	vintage = 2019,
 	vars = c("POP", "DATE_CODE", "DATE_DESC"),
 	region = "county:*")
 
-county_pop <- county_pop %>% 
+county_pop_2010 <- county_pop_2010 %>% 
 	mutate(population = as.numeric(POP),
 				 DATE_CODE = as.numeric(DATE_CODE)) %>%
 	# Use July estimates not decennial Census
@@ -199,9 +221,15 @@ county_pop_1990 <- county_pop_1990 %>%
 	mutate(year = year + 1900) %>%
 	arrange(year, fips_county)
 
-county_population <- bind_rows(county_pop_older, county_pop_1990, county_pop_2000, county_pop)
+###########################################################################
+# Join years
+###########################################################################
+county_population <- bind_rows(county_pop_older, county_pop_1990, county_pop_2000, county_pop_2010, county_latest)
 county_population <- left_join(county_population, fips_counties, by = "fips_county")
-county_population <- county_population %>% arrange(fips_county, year)
+county_population <- county_population %>% arrange(fips_county, year) %>%
+	select(year, fips_county, state_code, county_name, population)
+
+county_population <- as.data.frame(county_population)
 
 write.csv(county_population, "population/county-population.csv", row.names = F, na ="")
 
