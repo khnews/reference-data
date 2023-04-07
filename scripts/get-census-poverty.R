@@ -17,7 +17,7 @@ poverty_state <- getCensus(
 					 # Median ousehold income, all ages
 					 "SAEMHI_PT", "SAEMHI_MOE"),
 	region = "state:*",
-	time = "from 1989 to 2019")
+	time = "from 1989 to 2021")
 
 head(poverty_state)
 
@@ -53,7 +53,7 @@ poverty_county <- getCensus(
 					 # Median ousehold income, all ages
 					 "SAEMHI_PT", "SAEMHI_MOE"),
 	region = "county:*",
-	time = "from 1989 to 2019")
+	time = "from 1989 to 2021")
 
 head(poverty_county)
 
